@@ -353,7 +353,7 @@
                 if (q.question === "Will you be my valentine?") {
                     if (option === "No") {
                         button.addEventListener('click', () => {
-                            // Do nothing
+                            button.style.display = 'none'; // Make invisible on click
                         });
                     } else if (option === "Yes") {
                         button.addEventListener('mouseenter', () => {
