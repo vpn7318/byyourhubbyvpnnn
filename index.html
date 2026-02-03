@@ -65,6 +65,14 @@
             from { transform: translateY(-20px); opacity: 0; }
             to { transform: translateY(0); opacity: 1; }
         }
+        #progress {
+            font-size: 1.2em;
+            margin-bottom: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 10px;
+            border-radius: 15px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
         #buttons {
             position: relative;
             height: 60vh;
@@ -141,6 +149,35 @@
             0% { transform: translateY(100vh) rotate(0deg); opacity: 1; }
             100% { transform: translateY(-100px) rotate(360deg); opacity: 0; }
         }
+        /* Confetti effect */
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: #ff6b9d;
+            animation: fall 3s linear infinite;
+            pointer-events: none;
+            z-index: 2;
+        }
+        @keyframes fall {
+            0% { transform: translateY(-10px) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(100vh) rotate(360deg); opacity: 0; }
+        }
+        /* Music button */
+        #music-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.8);
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            cursor: pointer;
+            font-size: 1.5em;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            z-index: 10;
+        }
         /* Mobile responsiveness */
         @media (max-width: 768px) {
             #buttons {
@@ -150,21 +187,28 @@
                 padding: 12px 25px;
                 font-size: 1em;
             }
+            #music-btn {
+                width: 40px;
+                height: 40px;
+                font-size: 1.2em;
+            }
         }
     </style>
 </head>
 <body>
+    <button id="music-btn">🎵</button>
     <h1>Happy Valentine's Day, My Love! 💖</h1>
+    <div id="progress">Question 1 of 4</div>
     <div id="question"></div>
     <div id="buttons"></div>
-    <div id="end-message">You've completed the quiz! I love you more than words can say. ❤️</div>
+    <div id="end-message">You've completed the quiz! I love you more than words can say. ❤️<br><span id="score"></span></div>
 
     <script>
         const questions = [
             {
                 question: "Where we meet first time?",
                 options: ["Instagram", "Whatsapp", "Snapchat", "Facebook"],
-                correct: "Snapchat" // Not used for scoring, just for flow
+                correct: "Snapchat"
             },
             {
                 question: "Where did I romantically touch my lips to yours?",
@@ -184,10 +228,27 @@
         ];
 
         let currentQuestionIndex = 0;
+        let score = 0;
         const questionEl = document.getElementById('question');
+        const progressEl = document.getElementById('progress');
         const buttonsEl = document.getElementById('buttons');
         const endMessageEl = document.getElementById('end-message');
+        const scoreEl = document.getElementById('score');
+        const musicBtn = document.getElementById('music-btn');
         let movementInterval;
+        let audio = new Audio('https://www.soundjay.com/misc/sounds/bell-ringing-05.wav'); // Placeholder romantic music URL; replace with actual
+        audio.loop = true;
+        audio.volume = 0.3;
+
+        musicBtn.addEventListener('click', () => {
+            if (audio.paused) {
+                audio.play();
+                musicBtn.textContent = '🔊';
+            } else {
+                audio.pause();
+                musicBtn.textContent = '🔇';
+            }
+        });
 
         // Function to create floating hearts
         function createHeart() {
@@ -205,17 +266,36 @@
         // Create hearts periodically
         setInterval(createHeart, 800);
 
+        // Function to create confetti
+        function createConfetti() {
+            for (let i = 0; i < 50; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.left = Math.random() * 100 + '%';
+                confetti.style.animationDelay = Math.random() * 3 + 's';
+                confetti.style.background = `hsl(${Math.random() * 360}, 100%, 50%)`;
+                document.body.appendChild(confetti);
+                setTimeout(() => {
+                    confetti.remove();
+                }, 3000);
+            }
+        }
+
         function loadQuestion() {
             if (currentQuestionIndex >= questions.length) {
                 questionEl.style.display = 'none';
                 buttonsEl.innerHTML = '';
+                progressEl.style.display = 'none';
                 endMessageEl.style.display = 'block';
+                scoreEl.textContent = `Your score: ${score}/${questions.length}`;
+                createConfetti(); // Trigger confetti on completion
                 if (movementInterval) clearInterval(movementInterval);
                 return;
             }
 
             const q = questions[currentQuestionIndex];
             questionEl.textContent = q.question;
+            progressEl.textContent = `Question ${currentQuestionIndex + 1} of ${questions.length}`;
             buttonsEl.innerHTML = '';
 
             q.options.forEach(option => {
@@ -235,6 +315,9 @@
                     if (parseInt(button.dataset.runAwayCount) < 3) {
                         runAway(button);
                     } else {
+                        if (option === q.correct) {
+                            score++;
+                        }
                         button.classList.add('float-away');
                         setTimeout(() => {
                             currentQuestionIndex++;
